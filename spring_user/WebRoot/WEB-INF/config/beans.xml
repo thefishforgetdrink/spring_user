@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/tx
+						http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-3.0.xsd
+						http://www.springframework.org/schema/cache 
+						http://www.springframework.org/schema/cache/spring-cache.xsd
+						http://www.springframework.org/schema/aop 
+				http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+				
+	<!-- 打开Spring 的 Annotation支持 -->
+	<context:annotation-config/>	
+	<!--配置spring的注解自动扫描  去哪些包中找annotation-->
+	<context:component-scan base-package="com.test" />		
+	<!-- 指定JDBC配置文件 src下的 使用 classpath：jdbc.properties-->
+	<context:property-placeholder location="/WEB-INF/config/jdbc.properties" />
+
+	<!-- 配置C3P0数据源 
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		 数据库驱动类名 
+		<property name="driverClass" value="${driverClassName}" />
+		 连接数据库URL 
+		<property name="jdbcUrl" value="${url}" />
+		 连接数据库的用户名 
+		<property name="user" value="${user}" />
+		 连接数据库的密码 
+		<property name="password" value="${password}" />
+		初始数据源连接池的连接数 
+		<property name="initialPoolSize" value="10" />
+		 数据源连接池的最大的连接数 
+		<property name="maxPoolSize" value="40" />
+		 数据源连接池的最小的连接数 
+		<property name="minPoolSize" value="10" />
+
+		<property name="maxIdleTime" value="60"></property>
+
+		<property name="acquireIncrement" value="5"></property>
+		每60秒检查所有连接池中的空闲连接。Default: 0 
+		<property name="idleConnectionTestPeriod" value="60"></property>
+	</bean>-->
+	
+	<!-- dbcp数据源 -->
+	 <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">        
+	    <property name="driverClassName" value="${jdbc.driverClassName}" />       
+	    <property name="url" value="${jdbc.url}" />       
+	    <property name="username" value="${jdbc.username}" />       
+	    <property name="password" value="${jdbc.password}" />
+	    <!-- 连接池启动时的初始化 -->
+	    <property name="initialSize" value="1"/>
+	    <!-- 连接池的最大值 -->
+		<!-- <property name="maxActive" value="500"/> -->
+	    <!-- 最小空闲值，当空闲的连接数少于阀值时，连接池就会预申请去一些链接，以免洪峰来时来不及申请-->
+		<property name="minIdle" value="1"/>
+		<!-- 最大等待连接中的数量，设置为0时，表示没有限制。如果最大空闲值，当经过一个高峰时间后，连接池可以慢慢将已经用不到的链接慢慢释放一部分，一直减少到maxle为止-->
+		<property name="maxIdle" value="20"/>
+		<!-- 最大等待秒数，单位为毫秒， 超过时间会报出错误信息 -->
+		<property name="maxWait" value="1000"/>
+		<property name="maxActive" value="100"/>
+		<property name="timeBetweenEvictionRunsMillis" value="300000"/>
+		<!--是否自我中断，默认是 false  -->
+		<property name="removeAbandoned" value="true"/>
+		<!-- 几秒后数据连接会自动断开 -->
+		<property name="removeAbandonedTimeout" value="60"/>
+		<!-- 是否记录中断事件 默认false -->
+		<property name="logAbandoned" value="false"/>  
+	 </bean>
+	
+
+	<!--配置本地化代理工程bean,这是spring整合hibernate的入口 -->
+	<!-- 如果使用的是annotation的方式 ，不能使用 LocalSessionFactoryBean 应该使用org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean-->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+		<!-- 注入数据库源 -->
+		<property name="dataSource" ref="dataSource" />
+		<!--加载hibernate.cfg.xml文件,/WEB-INF/classes/hibernate.cfg.xml 
+		<property name="mappingDirectoryLocations">
+			<list>
+				<value>classpath*:www/pdwy/model/</value>
+			</list>
+		</property>-->
+		<!-- 设置spring 取那个包中查找相应的实体类 -->
+		<property name="packagesToScan">
+			<value>com.test.model</value>
+		</property>
+		
+		<property name="hibernateProperties">
+			<props>
+				<!-- MYSQL -->
+				 <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>  
+				<!-- oracle -->
+				<!--<prop key="hibernate.dialect">org.hibernate.dialect.OracleDialectt</prop> -->
+				<!-- <prop key="hibernate.hbm2ddl.auto">create</prop> -->
+				<!--<prop key="hibernate.dialect">org.hibernate.dialect.SQLServerDialect</prop> -->
+				<prop key="hibernate.show_sql">true</prop>
+<!-- 				<prop key="hibernate.bytecode.use_reflection_optimizer">true</prop> -->
+				<prop key="hibernate.format_sql">true</prop>
+				<!-- 自动创建更新数据表 -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+<!-- 				<prop key="hibernate.use_sql_comments">true</prop> -->
+<!-- 				<prop key="hibernate.generate_statistics">true</prop> -->
+<!-- 				<prop key="hibernate.order_updates"> true</prop> -->
+<!-- 				<prop key="hibernate.max_fetch_depth ">1</prop> -->
+<!-- 				<prop key="hibernate.use_identifer_rollback true">false</prop> -->
+			</props>
+		</property>
+	</bean>
+<!--
+    <bean id="cacheManager" 
+			class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean"> 
+			<property name="configLocation"> 
+			<value>classpath:ehcache.xml</value> 
+	</property> 
+	</bean>  
+  -->
+
+	<!-- 开启hibernateTemplate，并且为其注入sessionFactory 使用hibernateTemplate 
+	不太方便的就是要获取session的通过getSessionFactory（）方法获取 -->
+	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!--配置事务管理器 -->
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<!-- 配置aop spring是通过aop来进行事务管理 -->
+	<aop:config>
+		<!-- 设置pointcut 表示哪些方法要加入事务处理 -->
+		<aop:pointcut id="managerOperation"
+			expression="execution(* com.test.service.*.*(..))"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="managerOperation" />
+	</aop:config>
+	<!-- 配置哪些方法要加入事务控制 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<!-- 让所有的方法都加入事务管理，为了提高效率，可以把一些查询之类的方法设置为只读的事物-->
+			<tx:method name="*"  propagation="REQUIRED" read-only="true" />
+			<!-- 以下方法设计到修改的方法，就无法设置为只读 -->
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="add*"  propagation="REQUIRED" />
+			<tx:method name="del*"  propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+	
+	<!--配置事务的注解 
+	<tx:annotation-driven transaction-manager="txManager" />
+	-->
+    <!--配置spring的注解自动扫描 
+	<context:component-scan base-package="www.pdwy" />
+	-->
+	<!-- 定时器用于定时生成图片供首页调用
+	<import resource="task.xml"/> -->
+</beans>
